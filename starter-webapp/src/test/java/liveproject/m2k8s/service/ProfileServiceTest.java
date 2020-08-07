@@ -2,22 +2,19 @@ package liveproject.m2k8s.service;
 
 import liveproject.m2k8s.Profile;
 import liveproject.m2k8s.data.ProfileRepository;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+
 public class ProfileServiceTest {
     private ProfileRepository profileRepository = Mockito.mock(ProfileRepository.class);
     private ProfileService profileService;
 
-    @Before
+    @BeforeEach
     public void setup() {
         profileService = new ProfileService(profileRepository);
         Profile zasu = Profile.builder()

@@ -6,16 +6,21 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-import org.thymeleaf.spring4.SpringTemplateEngine;
-import org.thymeleaf.spring4.view.ThymeleafViewResolver;
+import org.thymeleaf.spring5.SpringTemplateEngine;
+import org.thymeleaf.spring5.view.ThymeleafViewResolver;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ServletContextTemplateResolver;
-import org.thymeleaf.templateresolver.TemplateResolver;
+import org.thymeleaf.templateresolver.ITemplateResolver;
 
 @Configuration
 @EnableWebMvc
 @ComponentScan("liveproject.m2k8s")
 public class WebConfig extends WebMvcConfigurerAdapter {
+  private static final String[] CLASSPATH_RESOURCE_LOCATIONS = {
+          "classpath:/META-INF/resources/", "classpath:/resources/",
+          "classpath:/static/", "classpath:/public/" };
 
   @Bean
   public ViewResolver viewResolver(SpringTemplateEngine templateEngine) {
@@ -23,16 +28,17 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     viewResolver.setTemplateEngine(templateEngine);
     return viewResolver;
   }
+
   @Bean
-  public SpringTemplateEngine templateEngine(TemplateResolver templateResolver) {
+  public SpringTemplateEngine templateEngine(ITemplateResolver templateResolver) {
     SpringTemplateEngine templateEngine = new SpringTemplateEngine();
     templateEngine.setTemplateResolver(templateResolver);
     return templateEngine;
   }
 
   @Bean
-  public TemplateResolver templateResolver() {
-    TemplateResolver templateResolver = new ServletContextTemplateResolver();
+  public ClassLoaderTemplateResolver templateResolver() {
+    ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
     templateResolver.setPrefix("/WEB-INF/views/");
     templateResolver.setSuffix(".html");
     templateResolver.setTemplateMode("HTML5");
@@ -43,5 +49,16 @@ public class WebConfig extends WebMvcConfigurerAdapter {
   public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer) {
     configurer.enable();
   }
-  
+
+  @Override
+  public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    if (!registry.hasMappingForPattern("/webjars/**")) {
+      registry.addResourceHandler("/webjars/**").addResourceLocations(
+              "classpath:/META-INF/resources/webjars/");
+    }
+    if (!registry.hasMappingForPattern("/**")) {
+      registry.addResourceHandler("/**").addResourceLocations(
+              CLASSPATH_RESOURCE_LOCATIONS);
+    }
+  }
 }
