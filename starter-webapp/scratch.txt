@@ -1,0 +1,55 @@
+
+1) Narayans-MacBook-Pro:~ narayanprangya$ http POST localhost:8080/profile username=unamerkel password=changeme firstName=Una lastName=Merkel email=unamerkel@example.com
+HTTP/1.1 201
+Connection: keep-alive
+Content-Length: 0
+Date: Sun, 09 Aug 2020 17:29:29 GMT
+Keep-Alive: timeout=60
+
+2) Narayans-MacBook-Pro:~ narayanprangya$ http localhost:8080/profile/unamerkel
+HTTP/1.1 200
+Connection: keep-alive
+Content-Type: application/json
+Date: Sun, 09 Aug 2020 17:47:18 GMT
+Keep-Alive: timeout=60
+Transfer-Encoding: chunked
+
+{
+    "email": "unamerkel@example.com",
+    "firstName": "Una",
+    "id": 5,
+    "imageFileContentType": null,
+    "imageFileName": null,
+    "lastName": "Merkel",
+    "password": "changeme",
+    "username": "unamerkel"
+}
+
+3) Narayans-MacBook-Pro:~ narayanprangya$ http localhost:8080/profile/russcolombo
+HTTP/1.1 404
+Connection: keep-alive
+Content-Length: 0
+Date: Sun, 09 Aug 2020 17:50:58 GMT
+Keep-Alive: timeout=60
+
+4) Narayans-MacBook-Pro:~ narayanprangya$ http -f POST http://localhost:8080/profile/unamerkel/image file@una_merkel.jpg
+HTTP/1.1 200
+Connection: keep-alive
+Content-Length: 0
+Date: Sun, 09 Aug 2020 18:03:04 GMT
+Keep-Alive: timeout=60
+
+
+5) Narayans-MacBook-Pro:~ narayanprangya$ http localhost:8080/profile/unamerkel/image
+HTTP/1.1 200
+Connection: keep-alive
+Content-Length: 86967
+Content-Type: image/jpeg
+Date: Sun, 09 Aug 2020 18:06:35 GMT
+Keep-Alive: timeout=60
+
+
+
++-----------------------------------------+
+| NOTE: binary data not shown in terminal |
++-----------------------------------------+
