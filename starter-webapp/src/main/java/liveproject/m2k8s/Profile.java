@@ -1,9 +1,6 @@
 package liveproject.m2k8s;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -23,7 +20,7 @@ import org.hibernate.validator.constraints.Email;
 public class Profile {
 
   @Id
-  @GeneratedValue
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
   
   @NotNull
@@ -48,8 +45,11 @@ public class Profile {
   @Email
   private String email;
 
+  private String imageFileName;
+  private String imageFileContentType;
+
   public Profile(String username, String password, String firstName, String lastName, String email) {
-    this(null, username, password, firstName, lastName, email);
+    this(null, username, password, firstName, lastName, email, null, null);
   }
 
 }

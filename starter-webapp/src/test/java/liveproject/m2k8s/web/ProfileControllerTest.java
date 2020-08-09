@@ -37,7 +37,7 @@ public class ProfileControllerTest {
             .andExpect(forwardedUrl("/WEB-INF/views/profile.html"))
             .andExpect(model().attribute("profile", hasProperty("id", is(1L))));
 
-    verify(controller, times(1)).showProfile(anyString(), any(Model.class));
+    verify(controller, times(1)).showProfile(anyString());
     verifyNoMoreInteractions(controller);
   }
 }

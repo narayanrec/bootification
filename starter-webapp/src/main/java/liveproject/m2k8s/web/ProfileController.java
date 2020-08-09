@@ -3,24 +3,35 @@ package liveproject.m2k8s.web;
 import liveproject.m2k8s.Profile;
 import liveproject.m2k8s.service.ProfileService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.Errors;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
-@Controller
+@RestController
 @Slf4j
 @RequestMapping("/profile")
 public class ProfileController {
@@ -38,37 +49,55 @@ public class ProfileController {
         this.profileService = profileService;
     }
 
-    @RequestMapping(value = "/register", method = GET)
-    public String showRegistrationForm(Model model) {
-        model.addAttribute(new Profile());
-        return "registerForm";
-    }
-
-    @RequestMapping(value = "/register", method = POST)
+    @PostMapping
     @Transactional
-    public String processRegistration(
-            @Valid Profile profile,
+    public ResponseEntity processRegistration(
+            @Valid @RequestBody Profile profile,
             Errors errors) {
         if (errors.hasErrors()) {
-            return "registerForm";
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
 
         profileService.save(profile);
-        return "redirect:/profile/" + profile.getUsername();
+        return new ResponseEntity(HttpStatus.CREATED);
     }
 
-    @RequestMapping(value = "/{username}", method = GET)
-    public String showProfile(@PathVariable String username, Model model) {
+    @GetMapping(value = "/{username}")
+    public ResponseEntity<Profile> showProfile(@PathVariable String username) {
         log.debug("Reading model for: "+username);
         Profile profile = profileService.getProfile(username);
-        model.addAttribute(profile);
-        return "profile";
+        if(profile == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.ok(profile);
     }
 
-    @RequestMapping(value = "/{username}", method = POST)
+    @GetMapping(value = "/{username}/image", produces = MediaType.IMAGE_JPEG_VALUE)
+    public byte[] showProfileImage(@PathVariable String username) throws IOException {
+        log.debug("Reading model for: "+username);
+        InputStream in = null;
+
+        try {
+            Profile profile = profileService.getProfile(username);
+            if(profile == null || StringUtils.isEmpty(profile.getImageFileName()))
+                in = defaultImage.getInputStream();
+            else
+                in = new FileInputStream(profile.getImageFileName());
+
+            return IOUtils.toByteArray(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if(in != null) in.close();
+        }
+        return null;
+    }
+
+    @PutMapping(value = "/{username}")
     @Transactional
-    public String updateProfile(@PathVariable String username, @ModelAttribute Profile profile, Model model) {
+    public ResponseEntity updateProfile(@PathVariable String username, @RequestBody @Valid Profile profile, Errors errors) {
         log.debug("Updating model for: "+username);
+        if (errors.hasErrors()) {
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        }
         Profile dbProfile = profileService.getProfile(username);
         boolean dirty = false;
         if (!StringUtils.isEmpty(profile.getEmail())
@@ -89,8 +118,35 @@ public class ProfileController {
         if (dirty) {
             profileService.save(dbProfile);
         }
-        model.addAttribute(profile);
-        return "profile";
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/{username}/image")
+    @Transactional
+    public ResponseEntity uploadImage(@PathVariable String username, @RequestParam("file") MultipartFile file) {
+        log.debug("Updating image for: "+username);
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        String fileName = file.getOriginalFilename();
+        if (!(fileName.endsWith("jpg") || fileName.endsWith("JPG"))) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            final String contentType = file.getContentType();
+            // Get the file and save it somewhere
+            byte[] bytes = file.getBytes();
+            Path path = Paths.get(uploadFolder, username+".jpg");
+            Files.write(path, bytes);
+            Profile profile = profileService.getProfile(username);
+            profile.setImageFileName(path.toString());
+            profile.setImageFileContentType(contentType);
+            profileService.save(profile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ResponseEntity.ok(null);
     }
 
 }

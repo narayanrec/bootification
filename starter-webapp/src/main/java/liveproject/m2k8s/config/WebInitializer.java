@@ -2,8 +2,6 @@ package liveproject.m2k8s.config;
 
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
-import liveproject.m2k8s.web.WebConfig;
-
 public class WebInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
   
   @Override
@@ -13,7 +11,7 @@ public class WebInitializer extends AbstractAnnotationConfigDispatcherServletIni
 
   @Override
   protected Class<?>[] getServletConfigClasses() {
-    return new Class<?>[] { WebConfig.class };
+    return new Class<?>[] { };
   }
 
   @Override
